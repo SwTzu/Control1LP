@@ -1,4 +1,0 @@
-galaxia Andromeda reabastecer 1
-galaxia ViaLactea reabastecer 0
-ruta Andromeda ViaLactea peso 50
-nave Andromeda combustible 100

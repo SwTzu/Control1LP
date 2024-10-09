@@ -1,18 +1,44 @@
-all: programa
+# Makefile para el proyecto de galaxias
 
-programa: lexer.o gramatica.tab.o estructuras.o
-	gcc -o programa lexer.o gramatica.tab.o estructuras.o -lfl
+# Nombre del ejecutable
+TARGET = galaxia
 
-lexer.o: lexer.l gramatica.tab.h
-	flex lexer.l
-	gcc -c lex.yy.c -o lexer.o
+# Archivos fuente
+LEX_FILE = lexer.l
+YACC_FILE = parser.y
 
-gramatica.tab.o gramatica.tab.h: gramatica.y
-	bison -d gramatica.y
-	gcc -c gramatica.tab.c -o gramatica.tab.o
+# Archivos generados por Bison y Flex
+YACC_C = parser.tab.c
+YACC_H = parser.tab.h
+LEX_C = lex.yy.c
 
-estructuras.o: estructuras.c
-	gcc -c estructuras.c -o estructuras.o
+# Compilador y banderas
+CC = gcc
+CFLAGS = -Wall -Wextra -Wno-unused-function -std=c99 -D_POSIX_C_SOURCE=200809L
+LDFLAGS = -lfl
 
+# Regla por defecto
+all: $(TARGET)
+
+# Regla para compilar el ejecutable
+$(TARGET): $(YACC_C) $(LEX_C)
+	$(CC) $(CFLAGS) $(YACC_C) $(LEX_C) -o $(TARGET) $(LDFLAGS)
+
+# Generar el analizador sintáctico con Bison
+$(YACC_C) $(YACC_H): $(YACC_FILE)
+	bison -d $(YACC_FILE)
+
+# Generar el analizador léxico con Flex
+$(LEX_C): $(LEX_FILE) $(YACC_H)
+	flex $(LEX_FILE)
+
+# Regla para limpiar los archivos generados
 clean:
-	rm -f *.o lex.yy.c gramatica.tab.* programa
+	@echo "Limpiando archivos generados..."
+	rm -f $(YACC_C) $(YACC_H) $(LEX_C) $(TARGET)
+
+# Regla para ejecutar el programa leyendo desde un archivo
+run:
+	./$(TARGET) < comandos.txt
+
+.PHONY: all clean run

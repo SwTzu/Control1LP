@@ -1,0 +1,21 @@
+crear_galaxia A;
+crear_galaxia B;
+crear_galaxia C;
+crear_galaxia D;
+crear_galaxia E;
+crear_galaxia F;
+
+conectar_galaxias A B 4;
+conectar_galaxias A C 2;
+conectar_galaxias B C 1;
+conectar_galaxias B D 1;
+conectar_galaxias C D 8;
+conectar_galaxias C E 10;
+conectar_galaxias D E 2;
+conectar_galaxias D F 6;
+conectar_galaxias E F 3;
+
+
+crear_nave combustible_inicial 20 ubicacion A;
+set_destino F;
+mover_autonomo modo_viaje menor_combustible;
