@@ -1,4 +1,0 @@
-
-crear_nave combustible_inicial 20 ubicacion A;
-set_destino F;
-mover_autonomo modo_viaje menor_combustible;

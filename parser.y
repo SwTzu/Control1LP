@@ -528,7 +528,7 @@ void mover(char *galaxia){
     }
 
     if (nave.combustible < consume){
-        printf("Error: Combustible insuficiente para llegar a '%s'.\n", galaxia);
+        printf("Error: Combustible insuficiente para llegar a '%s', TODOS MUEREN!.\n", galaxia);
         return;
     }
 
@@ -575,7 +575,7 @@ void ejecutar_viaje(Ruta *ruta){
         free(ruta);
         ruta = siguiente;
     }
-
+    exit(1);
 }
 
 /* Función para calcular la ruta óptima */

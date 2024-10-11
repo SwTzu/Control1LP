@@ -15,6 +15,15 @@ conectar_galaxias D E 2;
 conectar_galaxias D F 6;
 conectar_galaxias E F 3;
 
-crear_nave combustible_inicial 20 ubicacion A;
+
+crear_galaxia G sub_galaxia;
+conectar_galaxias C G 3;
+
+crear_nave combustible_inicial 13 ubicacion A;
 set_destino F;
+guiado B C;
+guiado A;
+guiado C;
+reabastecer;
+listar_vecinos 1;
 mover_autonomo modo_viaje menor_combustible;
