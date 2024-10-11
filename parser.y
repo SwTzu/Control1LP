@@ -1,5 +1,38 @@
+%code requires {
+    /* Definición de 'Ruta' */
+    typedef struct Ruta {
+        char *galaxia;
+        struct Ruta *siguiente;
+    } Ruta;
+}
+
+%union {
+    char *str;
+    int num;
+    Ruta *ruta;
+    struct {
+        int reabastece;
+        int sub_galaxia;
+    } opciones;
+}
+
+/* Declaración de tokens con sus tipos */
+%token CREAR_GALAXIA CONECTAR_GALAXIAS ESTABLECER_PESO CREAR_NAVE COMBUSTIBLE_INICIAL UBICACION
+%token SET_DESTINO MOVER_AUTONOMO MODO_VIAJE MENOR_COMBUSTIBLE MENOR_GALAXIAS RUTA
+%token <str> IDENTIFICADOR
+%token <num> NUMERO
+%token REABASTECIBLE SUB_GALAXIA GUIADO REABASTECER
+%token LISTAR_VECINOS MOVER_A
+
+/* Declaración de tipos para no terminales */
+%type <num> numero_opcional modo_viaje_opcional modo_viaje
+%type <opciones> opciones opciones_opcionales opcion
+%type <ruta> lista_galaxias
+
+/* Precedencia y asociatividad de operadores */
+%left ';'
+
 %{
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +41,6 @@
 /* Declaraciones de funciones y estructuras */
 void yyerror(const char *s);
 int yylex(void);
-
-#define MAX_GALAXIAS 100 // Máximo número de galaxias
 
 /* Estructuras de datos */
 typedef struct Galaxia {
@@ -37,11 +68,6 @@ typedef struct NodoAdyacente {
     struct NodoAdyacente *siguiente;
 } NodoAdyacente;
 
-typedef struct Ruta {
-    char *galaxia;
-    struct Ruta *siguiente;
-} Ruta;
-
 typedef struct Nave {
     int combustible;
     char *ubicacion_actual;
@@ -54,6 +80,7 @@ Arista *lista_aristas = NULL;
 Nave nave;
 
 /* Mapeo de galaxias a índices y listas de adyacencia */
+#define MAX_GALAXIAS 100 // Máximo número de galaxias
 char *galaxias_indices[MAX_GALAXIAS]; // Índice a nombre de galaxia
 int num_galaxias = 0;
 NodoAdyacente *adyacentes[MAX_GALAXIAS]; // Lista de adyacencia para cada galaxia
@@ -67,12 +94,12 @@ void mover_autonomo(int pasos, int modo_viaje);
 void reabastecer();
 void ejecutar_viaje_guiado(Ruta *ruta);
 void listar_vecinos(int radio);
-void mover_a(char *galaxia);
+void mover(char *galaxia);
 Ruta* calcular_ruta(char *origen, char *destino, int modo_viaje);
 Ruta* calcular_ruta_dijkstra(char *origen, char *destino);
 Ruta* calcular_ruta_bfs(char *origen, char *destino);
 Ruta* crear_ruta(char *nombre);
-Ruta* agregar_a_ruta(Ruta *ruta, char *nombre);
+Ruta* agregar_ruta(Ruta *ruta, char *nombre);
 int obtener_consumo(char *g1, char *g2);
 int galaxia_existe(char *nombre);
 int obtener_indice_galaxia(char *nombre);
@@ -80,33 +107,6 @@ Galaxia* buscar_galaxia(char *nombre);
 int contar_conexiones(char *nombre);
 void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current, int *result_count, char **result);
 %}
-
-/* Definición de tipos de datos para los tokens */
-%union {
-    char *str;
-    int num;
-    Ruta *ruta;
-    struct {
-        int reabastece;
-        int sub_galaxia;
-    } opciones;
-}
-
-/* Declaración de tokens con sus tipos */
-%token CREAR_GALAXIA CONECTAR_GALAXIAS ESTABLECER_PESO CREAR_NAVE COMBUSTIBLE_INICIAL UBICACION
-%token SET_DESTINO MOVER_AUTONOMO MODO_VIAJE MENOR_COMBUSTIBLE MENOR_GALAXIAS
-%token <str> IDENTIFICADOR
-%token <num> NUMERO
-%token REABASTECIBLE SUB_GALAXIA GUIADO REABASTECER
-%token LISTAR_VECINOS MOVER_A
-
-/* Declaración de tipos para no terminales */
-%type <num> numero_opcional modo_viaje_opcional modo_viaje 
-%type <opciones> opciones opciones_opcionales opcion
-%type <ruta> lista_galaxias
-
-/* Precedencia y asociatividad de operadores */
-%left ';'
 
 %%
 
@@ -156,7 +156,7 @@ instruccion:
         listar_vecinos($2);
     }
     | MOVER_A IDENTIFICADOR ';'{
-        mover_a($2);
+        mover($2);
     }
     ;
 
@@ -193,20 +193,20 @@ opcion:
     | SUB_GALAXIA  { $$.reabastece = 0; $$.sub_galaxia = 1; }
     ;
 
-
 lista_galaxias:
     IDENTIFICADOR { $$ = crear_ruta($1); }
-    | lista_galaxias IDENTIFICADOR { $$ = agregar_a_ruta($1, $2); }
+    | lista_galaxias IDENTIFICADOR { $$ = agregar_ruta($1, $2); }
     ;
 
 %%
-
 /* Código C adicional */
 
 /* Función para manejar errores de sintaxis */
 void yyerror(const char *s) {
     fprintf(stderr, "Error de sintaxis: %s\n", s);
 }
+
+/* Implementación de las funciones */
 
 /* Función para agregar una galaxia a la lista */
 void agregar_galaxia(char *nombre, int reabastece, int sub_galaxia) {
@@ -241,8 +241,10 @@ void conectar_galaxias(char *g1, char *g2, int peso) {
         return;
     }
 
-    Galaxia *galaxia1 = buscar_galaxia(g1);
-    Galaxia *galaxia2 = buscar_galaxia(g2);
+    // Galaxia *galaxia1 = buscar_galaxia(g1);
+    // Galaxia *galaxia2 = buscar_galaxia(g2);
+
+    // if (galaxia1->sub_galaxia)
 
     int indice1 = obtener_indice_galaxia(g1);
     int indice2 = obtener_indice_galaxia(g2);
@@ -343,7 +345,7 @@ void mover_autonomo(int pasos, int modo_viaje) {
             return;
         }
     Ruta *ruta = calcular_ruta(nave.ubicacion_actual, nave.destino, modo_viaje);
-    
+
     if (ruta == NULL) {
         printf("Error: No es posible llegar al destino desde la galaxia actual.\n");
         return;
@@ -433,7 +435,7 @@ void ejecutar_viaje_guiado(Ruta *ruta){
         nave.ubicacion_actual = strdup(siguiente);
         printf("La nave se ha movido a '%s'. Combustible restante: %d.\n", nave.ubicacion_actual, nave.combustible);
         actual = actual->siguiente;
-        
+
     }
     printf("La nave ha llegado a su destino.\n");
 
@@ -534,7 +536,7 @@ void mover(char *galaxia){
     free(nave.ubicacion_actual);
     nave.ubicacion_actual = strdup(galaxia);
     printf("La nave se ha movido a '%s'. Combustible restante: %d.\n", nave.ubicacion_actual, nave.combustible);
-    
+
 }
 
 void ejecutar_viaje(Ruta *ruta){
@@ -573,7 +575,7 @@ void ejecutar_viaje(Ruta *ruta){
         free(ruta);
         ruta = siguiente;
     }
-    
+
 }
 
 /* Función para calcular la ruta óptima */

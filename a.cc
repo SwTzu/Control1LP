@@ -1,3 +1,10 @@
+%code requires {
+    /* Declaraciones necesarias para %union */
+    typedef struct Ruta {
+        char *galaxia;
+        struct Ruta *siguiente;
+    } Ruta;
+}
 %{
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
@@ -94,14 +101,14 @@ void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current
 
 /* Declaración de tokens con sus tipos */
 %token CREAR_GALAXIA CONECTAR_GALAXIAS ESTABLECER_PESO CREAR_NAVE COMBUSTIBLE_INICIAL UBICACION
-%token SET_DESTINO MOVER_AUTONOMO MODO_VIAJE MENOR_COMBUSTIBLE MENOR_GALAXIAS
+%token SET_DESTINO MOVER_AUTONOMO MODO_VIAJE MENOR_COMBUSTIBLE MENOR_GALAXIAS RUTA
 %token <str> IDENTIFICADOR
 %token <num> NUMERO
 %token REABASTECIBLE SUB_GALAXIA GUIADO REABASTECER
 %token LISTAR_VECINOS MOVER_A
 
 /* Declaración de tipos para no terminales */
-%type <num> numero_opcional modo_viaje_opcional modo_viaje 
+%type <num> numero_opcional modo_viaje_opcional modo_viaje
 %type <opciones> opciones opciones_opcionales opcion
 %type <ruta> lista_galaxias
 
@@ -244,6 +251,8 @@ void conectar_galaxias(char *g1, char *g2, int peso) {
     Galaxia *galaxia1 = buscar_galaxia(g1);
     Galaxia *galaxia2 = buscar_galaxia(g2);
 
+    // if (galaxia1->sub_galaxia)
+
     int indice1 = obtener_indice_galaxia(g1);
     int indice2 = obtener_indice_galaxia(g2);
 
@@ -343,7 +352,7 @@ void mover_autonomo(int pasos, int modo_viaje) {
             return;
         }
     Ruta *ruta = calcular_ruta(nave.ubicacion_actual, nave.destino, modo_viaje);
-    
+
     if (ruta == NULL) {
         printf("Error: No es posible llegar al destino desde la galaxia actual.\n");
         return;
@@ -433,7 +442,7 @@ void ejecutar_viaje_guiado(Ruta *ruta){
         nave.ubicacion_actual = strdup(siguiente);
         printf("La nave se ha movido a '%s'. Combustible restante: %d.\n", nave.ubicacion_actual, nave.combustible);
         actual = actual->siguiente;
-        
+
     }
     printf("La nave ha llegado a su destino.\n");
 
@@ -534,7 +543,7 @@ void mover(char *galaxia){
     free(nave.ubicacion_actual);
     nave.ubicacion_actual = strdup(galaxia);
     printf("La nave se ha movido a '%s'. Combustible restante: %d.\n", nave.ubicacion_actual, nave.combustible);
-    
+
 }
 
 void ejecutar_viaje(Ruta *ruta){
@@ -573,7 +582,7 @@ void ejecutar_viaje(Ruta *ruta){
         free(ruta);
         ruta = siguiente;
     }
-    
+
 }
 
 /* Función para calcular la ruta óptima */
