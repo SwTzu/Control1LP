@@ -24,6 +24,10 @@
 "modo_viaje"               { return MODO_VIAJE; }
 "menor_combustible"        { return MENOR_COMBUSTIBLE; }
 "menor_galaxias"           { return MENOR_GALAXIAS; }
+"reabastecible"            { return REABASTECIBLE; }
+"sub_galaxia"              { return SUB_GALAXIA; }
+"viaje_guiado"             { return VIAJE_GUIADO; }
+"reabastecer"              { return REABASTECER; }
 [a-zA-Z_][a-zA-Z0-9_]*     { yylval.str = strdup(yytext); return IDENTIFICADOR; }
 [0-9]+                     { yylval.num = atoi(yytext); return NUMERO; }
 [ \t\r\n]+                 { /* Ignorar espacios y saltos de línea */ }

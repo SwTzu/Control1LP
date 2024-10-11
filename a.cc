@@ -54,26 +54,27 @@ int num_galaxias = 0;
 NodoAdyacente *adyacentes[MAX_GALAXIAS]; // Lista de adyacencia para cada galaxia
 
 /* Prototipos de funciones */
-void agregar_galaxia(char *nombre, int reabastece, int sub_galaxia);
+void agregar_galaxia(char *nombre);
 void conectar_galaxias(char *g1, char *g2, int peso);
 void establecer_peso(char *g1, char *g2, int peso);
 void establecer_destino(char *nombre_galaxia);
 void mover_autonomo(int pasos, int modo_viaje);
-void reabastecer();
-void ejecutar_viaje_guiado(Ruta *ruta);
-void listar_vecinos(int radio);
-void mover_a(char *galaxia);
 Ruta* calcular_ruta(char *origen, char *destino, int modo_viaje);
 Ruta* calcular_ruta_dijkstra(char *origen, char *destino);
 Ruta* calcular_ruta_bfs(char *origen, char *destino);
-Ruta* crear_ruta(char *nombre);
-Ruta* agregar_a_ruta(Ruta *ruta, char *nombre);
 int obtener_consumo(char *g1, char *g2);
 int galaxia_existe(char *nombre);
 int obtener_indice_galaxia(char *nombre);
-Galaxia* buscar_galaxia(char *nombre);
-int contar_conexiones(char *nombre);
-void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current_radio, int *result_count, char **result);
+Galaxia* buscar_galaxia(char *nombre)
+void listar_galaxias_en_radio(int radio, int origen, int *visitados, int current, int *result_count, char **result);
+Ruta* crear_ruta(char *galaxia);
+Ruta* agregar_ruta(Ruta *ruta, char *galaxia);
+void reabastecer();
+void ejecutar_viaje_guiado(Ruta *ruta);
+void listar_vecinos(int radio);
+void mover(char *galaxia);
+void ejecutar_viaje(Ruta *ruta);
+
 %}
 
 /* Definición de tipos de datos para los tokens */
@@ -93,12 +94,11 @@ void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current
 %token <str> IDENTIFICADOR
 %token <num> NUMERO
 %token REABASTECIBLE SUB_GALAXIA GUIADO REABASTECER
-%token LISTAR_VECINOS MOVER_A
 
 /* Declaración de tipos para no terminales */
-%type <num> numero_opcional modo_viaje_opcional modo_viaje 
-%type <opciones> opciones
+%type <num> numero_opcional modo_viaje_opcional modo_viaje radio
 %type <ruta> lista_galaxias
+%type <opciones> opciones
 
 /* Precedencia y asociatividad de operadores */
 %left ';'
@@ -141,17 +141,11 @@ instruccion:
     | MOVER_AUTONOMO numero_opcional modo_viaje_opcional ';' {
         mover_autonomo($2, $3);
     }
-    | REABASTECER ';'{
+    | REABASTECER ';' {
         reabastecer();
     }
-    | GUIADO lista_galaxias ';'{
+    | GUIADO lista_galaxias ';' {
         ejecutar_viaje_guiado($2);
-    }
-    | LISTAR_VECINOS NUMERO ';' {
-        listar_vecinos($2);
-    }
-    | MOVER_A IDENTIFICADOR ';'{
-        mover_a($2);
     }
     ;
 
