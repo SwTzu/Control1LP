@@ -10,7 +10,6 @@
 #endif
 %}
 
-
 %%
 
 "crear_galaxia"            { return CREAR_GALAXIA; }
@@ -26,8 +25,10 @@
 "menor_galaxias"           { return MENOR_GALAXIAS; }
 "reabastecible"            { return REABASTECIBLE; }
 "sub_galaxia"              { return SUB_GALAXIA; }
-"viaje_guiado"             { return VIAJE_GUIADO; }
+"guiado"                   { return GUIADO; }
 "reabastecer"              { return REABASTECER; }
+"listar_vecinos"           { return LISTAR_VECINOS; }
+"mover_a"                  { return MOVER_A; }
 [a-zA-Z_][a-zA-Z0-9_]*     { yylval.str = strdup(yytext); return IDENTIFICADOR; }
 [0-9]+                     { yylval.num = atoi(yytext); return NUMERO; }
 [ \t\r\n]+                 { /* Ignorar espacios y saltos de línea */ }

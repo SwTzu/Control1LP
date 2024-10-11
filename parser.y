@@ -19,6 +19,11 @@ typedef struct Galaxia {
     struct Galaxia *siguiente;
 } Galaxia;
 
+typedef struct {
+    int reabastece;
+    int sub_galaxia;
+} Opciones;
+
 typedef struct Arista {
     char *galaxia1;
     char *galaxia2;
@@ -73,7 +78,7 @@ int galaxia_existe(char *nombre);
 int obtener_indice_galaxia(char *nombre);
 Galaxia* buscar_galaxia(char *nombre);
 int contar_conexiones(char *nombre);
-void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current_radio, int *result_count, char **result);
+void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current, int *result_count, char **result);
 %}
 
 /* Definición de tipos de datos para los tokens */
@@ -97,7 +102,7 @@ void listar_galaxias_en_radio(int origen, int radio, int *visitados, int current
 
 /* Declaración de tipos para no terminales */
 %type <num> numero_opcional modo_viaje_opcional modo_viaje 
-%type <opciones> opciones
+%type <opciones> opciones opciones_opcionales opcion
 %type <ruta> lista_galaxias
 
 /* Precedencia y asociatividad de operadores */
@@ -171,10 +176,28 @@ modo_viaje:
     ;
 
 opciones:
-    {$$.opciones.reabastece =0; $$.opciones.sub_galaxia=0;}
-    | opciones REABASTECIBLE {$$.opciones.reabastece = 1; $$.opciones.sub_galaxia = $1.opciones.sub_galaxia;}
-    | opciones SUB_GALAXIA { $$.opciones.sub_galaxia = 1; $$.opciones.reabastece = $1.opciones.reabastece;}
-    | opciones REABASTECIBLE SUB_GALAXIA {$$.opciones.reabastece = 1; $$.opciones.sub_galaxia = 1; }
+    /* vacío */ { $$.reabastece = 0; $$.sub_galaxia = 0; }
+    | opciones_opcionales { $$.reabastece = $1.reabastece; $$.sub_galaxia = $1.sub_galaxia; }
+    ;
+
+opciones_opcionales:
+    opcion { $$.reabastece = $1.reabastece; $$.sub_galaxia = $1.sub_galaxia; }
+    | opciones_opcionales opcion {
+        $$.reabastece = $1.reabastece | $2.reabastece;
+        $$.sub_galaxia = $1.sub_galaxia | $2.sub_galaxia;
+    }
+    ;
+
+opcion:
+    REABASTECIBLE { $$.reabastece = 1; $$.sub_galaxia = 0; }
+    | SUB_GALAXIA  { $$.reabastece = 0; $$.sub_galaxia = 1; }
+    ;
+
+
+lista_galaxias:
+    IDENTIFICADOR { $$ = crear_ruta($1); }
+    | lista_galaxias IDENTIFICADOR { $$ = agregar_a_ruta($1, $2); }
+    ;
 
 %%
 
@@ -186,18 +209,17 @@ void yyerror(const char *s) {
 }
 
 /* Función para agregar una galaxia a la lista */
-void agregar_galaxia(char *nombre) {
+void agregar_galaxia(char *nombre, int reabastece, int sub_galaxia) {
     if (galaxia_existe(nombre)) {
         printf("Advertencia: La galaxia '%s' ya existe.\n", nombre);
         return;
     }
     Galaxia *nueva = (Galaxia *)malloc(sizeof(Galaxia));
     nueva->nombre = strdup(nombre);
-    nueva->puede_reabastecer = reabastece; // Por defecto, no puede reabastecer
-    nueva->siguiente = lista_galaxias;
+    nueva->puede_reabastecer = reabastece;
     nueva->sub_galaxia = sub_galaxia;
+    nueva->siguiente = lista_galaxias;
     lista_galaxias = nueva;
-
 
     // Agregar al mapeo de índices
     if (num_galaxias >= MAX_GALAXIAS) {
@@ -210,6 +232,7 @@ void agregar_galaxia(char *nombre) {
 
     printf("Galaxia '%s' creada.\n", nombre);
 }
+
 
 /* Función para conectar dos galaxias con un peso */
 void conectar_galaxias(char *g1, char *g2, int peso) {
@@ -317,9 +340,10 @@ void establecer_destino(char *nombre_galaxia) {
 void mover_autonomo(int pasos, int modo_viaje) {
     if (nave.destino == NULL) {
         printf("Error: No se ha establecido un destino.\n");
-        return;
-    }
+            return;
+        }
     Ruta *ruta = calcular_ruta(nave.ubicacion_actual, nave.destino, modo_viaje);
+    
     if (ruta == NULL) {
         printf("Error: No es posible llegar al destino desde la galaxia actual.\n");
         return;
@@ -461,7 +485,7 @@ void listar_galaxias_en_radio(int radio, int origen ,int *visitados,int current 
     NodoAdyacente *nodo = adyacentes[origen];
     while (nodo != NULL){
         if (!visitados[nodo->indice_galaxia]){
-            listar_galaxias_en_radio(radio, nodo->indice_galaxia, current+1, result_count, result);
+            listar_galaxias_en_radio(radio, nodo->indice_galaxia, visitados, current+1, result_count, result);
         }
         nodo = nodo->siguiente;
     }
@@ -730,15 +754,15 @@ int obtener_indice_galaxia(char *nombre) {
     return -1; // No encontrado
 }
 
-Galaxia* buscar_galaxia(char *nombre){
-    Galaxia *actual =lista_galaxias;
-    while (actual !=NULL){
-        if(strcmp(actual->nombre,nombre)==0){
+Galaxia* buscar_galaxia(char *nombre) {
+    Galaxia *actual = lista_galaxias;
+    while (actual != NULL) {
+        if (strcmp(actual->nombre, nombre) == 0) {
             return actual;
         }
-        actual=actual->siguiente
+        actual = actual->siguiente;
     }
-    return NULL
+    return NULL;
 }
 
 Ruta* crear_ruta(char *galaxia){
